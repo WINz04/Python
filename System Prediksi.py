@@ -9,12 +9,8 @@ import seaborn as sns
 import os
 import csv
 from sklearn.metrics import r2_score, mean_absolute_error
-
-# Untuk Mengatur Style Grafik
 sns.set(style="darkgrid")
 
-
-# Tentukan Nama Aplikasi
 class MyApp(wx.App):
     def OnInit(self):
         frame = MyFrame(None, title='Prediksi Jumlah Daging Potong Pada Rumah Potong Hewan (RPH)')
@@ -26,19 +22,17 @@ class MyFrame(wx.Frame):
     def __init__(self, parent, title):
         super().__init__(parent, title=title, size=(900, 700))
 
-        self.data_jenis_daging = pd.DataFrame()  # Data jenis daging yang sudah diimpor
+        self.data_jenis_daging = pd.DataFrame()  
         self.SetBackgroundColour(wx.Colour(200, 200, 200))
         panel = wx.Panel(self)
 
-        #Pembuatan Tombol dan Menu Dropdown
-
         jenis_daging_choices = ['Sapi', 'Kerbau', 'Kuda', 'Kambing', 'Domba', 'Babi']
         self.jenis_daging_dropdown = wx.ComboBox(panel, choices=jenis_daging_choices, style=wx.CB_DROPDOWN)
-        self.jenis_daging_dropdown.Disable()  # Menonaktifkan dropdown jenis daging
+        self.jenis_daging_dropdown.Disable()  
 
         provinsi_choices = self.load_provinsi_choices()
         self.provinsi_dropdown = wx.ComboBox(panel, choices=provinsi_choices, style=wx.CB_DROPDOWN)
-        self.provinsi_dropdown.Disable()  # Menonaktifkan dropdown provinsi
+        self.provinsi_dropdown.Disable()  
 
         self.import_button = wx.Button(panel, label='Import Data')
         self.import_button.SetBackgroundColour(wx.Colour(0, 200, 0))
@@ -60,8 +54,6 @@ class MyFrame(wx.Frame):
         self.akurasi_input = wx.TextCtrl(panel)
         self.output_text = wx.TextCtrl(panel, style=wx.TE_MULTILINE)
         self.graph_output = wx.StaticBitmap(panel)
-
-        # Buat layout
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox1.Add(wx.StaticText(panel, label='Jenis Daging:'), flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=5)
