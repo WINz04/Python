@@ -74,8 +74,6 @@ class MyFrame(wx.Frame):
         vbox.Add(wx.StaticText(panel, label='Prediksi Jumlah Daging Potong 2021 : '), flag=wx.ALL, border=10)
         vbox.Add(self.output_text, proportion=1, flag=wx.EXPAND | wx.ALL, border=5)
         vbox.Add(self.graph_output, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
-
-        # Fungsi Ketika Tombol Di klik
         self.import_button.Bind(wx.EVT_BUTTON, self.import_data)
         self.tampilkan_data_button.Bind(wx.EVT_BUTTON, self.tampilkan_data_asli)
         self.train_button.Bind(wx.EVT_BUTTON, self.train_and_predict_model)
@@ -83,25 +81,23 @@ class MyFrame(wx.Frame):
         self.download_button.Bind(wx.EVT_BUTTON, self.download_prediction)
         self.akurasi_button.Bind(wx.EVT_BUTTON, self.calculate_accuracy)
 
-        # Set keadaan Tombol Ketika Aplikasi Berjalan
+        
         self.tampilkan_data_button.Disable()
         self.train_button.Disable()
         self.download_button.Disable()
         self.akurasi_button.Disable()
 
-        # Mengatur tata letak (layout)
+        
         panel.SetSizer(vbox)
 
-    # Pilih Provinsi
+  
     def load_provinsi_choices(self):
         if os.path.exists('data.csv'):
             data = pd.read_csv('data.csv')
             self.data_jenis_daging = data.copy()
-            self.jenis_daging_dropdown.Enable()  # Mengaktifkan dropdown jenis daging
+            self.jenis_daging_dropdown.Enable()  
             return data['provinsi'].unique().tolist()
         return []
-
-    # FUnction Untuk Input Data Excel
     def import_data(self, event):
         wildcard = "CSV files (*.csv)|*.csv"
         dialog = wx.FileDialog(None, "Import Data", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -112,19 +108,19 @@ class MyFrame(wx.Frame):
             data.to_csv('data.csv', index=False)
             provinsi_choices = data['provinsi'].unique().tolist()
             self.provinsi_dropdown.SetItems(provinsi_choices)
-            self.provinsi_dropdown.Enable()  # Mengaktifkan dropdown provinsi
+            self.provinsi_dropdown.Enable()  
             self.provinsi_dropdown.SetValue('')
-            self.jenis_daging_dropdown.Enable()  # Mengaktifkan dropdown jenis daging
+            self.jenis_daging_dropdown.Enable() 
             self.tampilkan_data_button.Enable()
             self.train_button.Enable()
 
         dialog.Destroy()
 
-    # Funtion untuk Tombol Data Asli
+    
     def tampilkan_data_asli(self, event):
         self.reset_output()
 
-        #Pilih Jenis Daging dan Provinsi
+        
         jenis_daging = self.jenis_daging_dropdown.GetValue()
         provinsi = self.provinsi_dropdown.GetValue()
 
@@ -139,21 +135,18 @@ class MyFrame(wx.Frame):
         data_provinsi = self.data_jenis_daging[self.data_jenis_daging['provinsi'] == provinsi]
         data_asli = data_provinsi[['tahun', jenis_daging]]
 
-        # tampilkan pada Text
+        
         self.output_text.AppendText(f"Data Asli {jenis_daging} di {provinsi}:\n")
         self.output_text.AppendText(data_asli.to_string(index=False, justify='left', col_space=12))
 
-        # Buat plot/Grafik
+        
         fig, ax = plt.subplots(figsize=(10, 6))
         sns.lineplot(data=data_asli, x='tahun', y=jenis_daging)
         ax.set_title(f"Data Asli {jenis_daging} di {provinsi}")
         ax.set_xlabel('Tahun')
         ax.set_ylabel(f'Jumlah Pemotongan {jenis_daging}')
-
-        # Simpan Gambar
         plt.savefig('data_asli_plot.png')
 
-        # memuat gambar plot/Grafik dan menampilkannya
         image = wx.Image('data_asli_plot.png', wx.BITMAP_TYPE_ANY)
         image = image.Scale(500, 300, wx.IMAGE_QUALITY_HIGH)
         bitmap = wx.Bitmap(image)
@@ -176,25 +169,20 @@ class MyFrame(wx.Frame):
 
         data_provinsi = self.data_jenis_daging[self.data_jenis_daging['provinsi'] == provinsi]
 
-        # Mempersiapkan Data
+        
         X = data_provinsi['tahun'].values.reshape(-1, 1)
         y = data_provinsi[jenis_daging].values
 
-        # Mengubah Nilai X ke dalam rentang [0,1]
+        
         scaler = MinMaxScaler()
-        X = scaler.fit_transform(X) # Fungsi MinMax Scaler pada X
-
-        # Regresi MLPRegressor
+        X = scaler.fit_transform(X)         
         model = MLPRegressor(hidden_layer_sizes=(100, 200), activation='relu', solver='adam', tol=1e-7, max_iter=100000,
                              random_state=42)
-
-        # Pelatihan Jaringan Syaraf Tiruan
         model.fit(X, y)
-
-        X_2021 = scaler.transform([[2021]])  #Membuat Array 2D Sebagai Input prediksi
+        X_2021 = scaler.transform([[2021]])  
         pred_2021 = model.predict(X_2021)[0]
 
-        # menampilkan teks pada pada saat output
+        
         self.output_text.AppendText(
             f"Prediksi Jumlah Pemotongan {jenis_daging} Tahun 2021 di {provinsi}: {pred_2021:.1f}\n")
 
@@ -206,27 +194,22 @@ class MyFrame(wx.Frame):
         ax.set_ylabel(f'Jumlah Pemotongan {jenis_daging}')
         ax.legend()
 
-        # Save plot to image
         plt.savefig('plot.png')
 
-        # Load plot image and display
         image = wx.Image('plot.png', wx.BITMAP_TYPE_ANY)
         image = image.Scale(500, 300, wx.IMAGE_QUALITY_HIGH)
         bitmap = wx.Bitmap(image)
         self.graph_output.SetBitmap(bitmap)
 
-        self.download_button.Enable()  # Mengaktifkan tombol download
-        self.akurasi_button.Enable()  # Mengaktifkan tombol akurasi
+        self.download_button.Enable()  
+        self.akurasi_button.Enable()  
 
-        # Simpan data asli dan hasil prediksi ke Excel
         df_asli = data_provinsi[['tahun', jenis_daging]]
         df_prediksi = pd.DataFrame({'tahun': [2021], jenis_daging: [pred_2021]})
-
         df_combined = pd.concat([df_asli, df_prediksi], ignore_index=True)
-
         df_combined.to_excel('prediksi_daging_potong.xlsx', index=False)
 
-    # Function Reset Data
+
     def reset_data(self, event):
         self.reset_output()
         if os.path.exists('data.csv'):
@@ -235,21 +218,20 @@ class MyFrame(wx.Frame):
             os.remove('prediksi_daging_potong.xlsx')
         self.provinsi_dropdown.SetItems([])
         self.provinsi_dropdown.SetValue('')
-        self.provinsi_dropdown.Disable()  # Menonaktifkan dropdown provinsi
-        self.jenis_daging_dropdown.Disable()  # Menonaktifkan dropdown jenis daging
+        self.provinsi_dropdown.Disable()  
+        self.jenis_daging_dropdown.Disable()  
         self.data_jenis_daging = pd.DataFrame()
         self.tampilkan_data_button.Disable()
         self.train_button.Disable()
         self.download_button.Disable()
         self.akurasi_button.Disable()
 
-    # Reset Output teks dan Grafik
+    
     def reset_output(self):
         self.output_text.Clear()
         self.graph_output.SetBitmap(wx.NullBitmap)
         plt.close()
 
-    # Tombol Donwload hasil Prediksi
     def download_prediction(self, event):
         if os.path.exists('prediksi_daging_potong.xlsx'):
             wildcard = "Excel files (*.xlsx)|*.xlsx"
@@ -259,7 +241,6 @@ class MyFrame(wx.Frame):
                 os.replace('prediksi_daging_potong.xlsx', destination)
             dialog.Destroy()
 
-    # Untuk Akurasi
     def calculate_accuracy(self, event):
         self.reset_output()
 
@@ -308,9 +289,8 @@ class MyFrame(wx.Frame):
         # Nilai MAE
         if akurasi_input != 0:
             akurasi = 1 - abs(akurasi_input - pred_2021) / akurasi_input
-        else:
-            # Handle jika akurasi_input adalah nol
-            akurasi = 0  # Atau nilai lain yang sesuai untuk mengatasi kasus ini
+        else: 
+            akurasi = 0  
         self.output_text.AppendText(f"Akurasi: {akurasi:.2%}\n")
 
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -322,10 +302,7 @@ class MyFrame(wx.Frame):
         ax.axhline(y=akurasi_input, color='green', linestyle='--', label='Nilai Aktual')
         ax.legend()
 
-        # Save plot to image
         plt.savefig('akurasi_plot.png')
-
-        # Load plot image and display
         image = wx.Image('akurasi_plot.png', wx.BITMAP_TYPE_ANY)
         image = image.Scale(500, 300, wx.IMAGE_QUALITY_HIGH)
         bitmap = wx.Bitmap(image)
